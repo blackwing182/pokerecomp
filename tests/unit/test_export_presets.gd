@@ -14,7 +14,7 @@ const RELEASE_NOTES: String = "res://.github/release-notes.md"
 ## the failure would arrive on a tag rather than on a pull request.
 const PUBLISHED: Array[String] = [
 	"Windows Desktop", "macOS", "Linux", "Android", "iOS",
-	"Linux ARM64", "Windows Desktop ARM64",
+	"Linux ARM64", "Windows Desktop ARM64", "Linux ARM64 R36S",
 ]
 
 ## Preset section to the option keys under it that must equal the app version.
