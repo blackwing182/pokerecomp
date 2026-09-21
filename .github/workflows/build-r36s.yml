@@ -1,0 +1,112 @@
+name: Build R36S ARM64
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "r36s/**"
+      - "project.godot"
+      - "export_presets.cfg"
+      - "tools/build_export_templates.sh"
+      - ".github/workflows/build-r36s.yml"
+
+permissions:
+  contents: read
+
+env:
+  GODOT_VERSION: 4.8-dev4
+  GODOT_TEMPLATE_DIR: 4.8.dev4
+  GODOT_COMMIT: b56a91878e7c94977e4af978968e41d0670c0a8b
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 240
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            git scons unzip zip curl \
+            libx11-dev libxcursor-dev libxinerama-dev libxi-dev \
+            libxrandr-dev libwayland-dev libxkbcommon-dev libudev-dev \
+            libasound2-dev libpulse-dev libgl1-mesa-dev
+
+      - name: Download Godot ARM64 editor
+        run: |
+          mkdir -p .r36s-toolchain/editor
+          curl -fL \
+            "https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_linux.arm64.zip" \
+            -o /tmp/godot.zip
+          unzip -q /tmp/godot.zip -d .r36s-toolchain/editor
+          cp "$(find .r36s-toolchain/editor -type f -name 'Godot_v*_linux.arm64' -print -quit)" \
+             .r36s-toolchain/Godot
+          chmod +x .r36s-toolchain/Godot
+
+      - name: Checkout exact Godot source
+        run: |
+          git init -q .r36s-toolchain/godot-src
+          git -C .r36s-toolchain/godot-src remote add origin https://github.com/godotengine/godot.git
+          git -C .r36s-toolchain/godot-src fetch -q --depth 1 origin "$GODOT_COMMIT"
+          git -C .r36s-toolchain/godot-src checkout -q FETCH_HEAD
+
+      - name: Build stripped ARM64 export template
+        run: |
+          mkdir -p .r36s-toolchain/templates
+          SCONSFLAGS="-j$(nproc)" \
+            tools/build_export_templates.sh \
+            .r36s-toolchain/godot-src \
+            .r36s-toolchain/templates \
+            linux-arm64
+
+      - name: Install stock templates and overlay R36S template
+        run: |
+          mkdir -p "$HOME/.local/share/godot/export_templates/${GODOT_TEMPLATE_DIR}"
+          curl -fL \
+            "https://github.com/godotengine/godot-builds/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_export_templates.tpz" \
+            -o /tmp/templates.tpz
+          mkdir -p /tmp/tpz
+          unzip -q /tmp/templates.tpz -d /tmp/tpz
+          cp -R /tmp/tpz/templates/. \
+            "$HOME/.local/share/godot/export_templates/${GODOT_TEMPLATE_DIR}/"
+          cp -f .r36s-toolchain/templates/linux_release.arm64 \
+            "$HOME/.local/share/godot/export_templates/${GODOT_TEMPLATE_DIR}/linux_release.arm64"
+
+      - name: Import project
+        run: |
+          .r36s-toolchain/Godot --headless --editor --path . --quit
+
+      - name: Export R36S build
+        run: |
+          rm -rf builds/r36s
+          mkdir -p builds/r36s dist
+          .r36s-toolchain/Godot --headless --path . \
+            --export-release "Linux ARM64 R36S" \
+            builds/r36s/pokerecomp-r36s.arm64
+          test -s builds/r36s/pokerecomp-r36s.arm64
+          chmod +x builds/r36s/pokerecomp-r36s.arm64
+
+      - name: Package PortMaster test zip
+        run: |
+          rm -rf dist/PokeRecomp-R36S
+          mkdir -p dist/PokeRecomp-R36S/pokerecomp-r36s
+          cp builds/r36s/pokerecomp-r36s.arm64 \
+             dist/PokeRecomp-R36S/pokerecomp-r36s/pokerecomp-r36s
+          cp r36s/port/PokeRecomp.sh dist/PokeRecomp-R36S/PokeRecomp.sh
+          cp r36s/port/port.json dist/PokeRecomp-R36S/pokerecomp-r36s/port.json
+          cp r36s/port/README.md dist/PokeRecomp-R36S/pokerecomp-r36s/README.md
+          chmod +x dist/PokeRecomp-R36S/PokeRecomp.sh
+          cd dist/PokeRecomp-R36S
+          zip -qry ../PokeRecomp-R36S.zip .
+          cd ../..
+          sha256sum dist/PokeRecomp-R36S.zip > dist/PokeRecomp-R36S.zip.sha256
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PokeRecomp-R36S-RK3326
+          path: |
+            dist/PokeRecomp-R36S.zip
+            dist/PokeRecomp-R36S.zip.sha256
