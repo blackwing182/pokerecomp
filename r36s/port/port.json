@@ -1,0 +1,37 @@
+{
+  "version": 4,
+  "name": "PokeRecomp-R36S.zip",
+  "items": [
+    "PokeRecomp.sh",
+    "pokerecomp-r36s"
+  ],
+  "items_opt": [],
+  "attr": {
+    "title": "PokéRecomp",
+    "porter": [
+      "R36S build"
+    ],
+    "desc": "Native Godot reimplementation of Pokémon Red, Blue, Yellow, Gold, Silver and Crystal for RK3326 R36S handhelds.",
+    "desc_md": null,
+    "inst": "Bring your own supported ROM. Requires PortMaster WestonPack runtime. No ROMs are included.",
+    "inst_md": null,
+    "genres": [
+      "roleplaying"
+    ],
+    "image": null,
+    "rtr": true,
+    "exp": true,
+    "runtime": [
+      "weston_pkg_0.2.squashfs"
+    ],
+    "store": [],
+    "availability": "free",
+    "reqs": [
+      "4:3"
+    ],
+    "arch": [
+      "aarch64"
+    ],
+    "min_glibc": ""
+  }
+}
