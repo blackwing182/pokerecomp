@@ -96,8 +96,8 @@ jobs:
           cp builds/r36s/pokerecomp-r36s.arm64 \
              dist/PokeRecomp-R36S/pokerecomp-r36s/pokerecomp-r36s
           cp r36s/port/PokeRecomp.sh dist/PokeRecomp-R36S/PokeRecomp.sh
-          cp r36s/port/port.json dist/PokeRecomp-R36S/pokerecomp-r36s/port.json
-          cp r36s/port/README.md dist/PokeRecomp-R36S/pokerecomp-r36s/README.md
+          cp r36s/port/port.json dist/PokeRecomp-R36S/port.json
+          cp r36s/port/README.md dist/PokeRecomp-R36S/README.md
           chmod +x dist/PokeRecomp-R36S/PokeRecomp.sh
           cd dist/PokeRecomp-R36S
           zip -qry ../PokeRecomp-R36S.zip .
